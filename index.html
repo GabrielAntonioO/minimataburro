@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MiniMataburro</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, 'Helvetica Neue', sans-serif;
+      background: #1a1a1a;
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      padding: 8px 0 4px 0;
+      border-bottom: 1px solid #333;
+    }
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #4CAF50;
+    }
+    header p {
+      font-size: 11px;
+      color: #888;
+    }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+    }
+    .user {
+      align-self: flex-end;
+      background: #2a7a2a;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 10px 10px 0 10px;
+      font-size: 15px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .ai {
+      align-self: flex-start;
+      background: #2a2a2a;
+      color: #ddd;
+      padding: 6px 10px;
+      border-radius: 10px 10px 10px 0;
+      font-size: 15px;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    .ai .speak-btn {
+      background: #333;
+      color: #4CAF50;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .ai .speak-btn:active {
+      background: #555;
+    }
+    footer {
+      display: flex;
+      gap: 6px;
+      padding: 8px 0 4px 0;
+      border-top: 1px solid #333;
+      flex-shrink: 0;
+    }
+    input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #444;
+      border-radius: 20px;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      min-width: 0;
+    }
+    input::placeholder {
+      color: #666;
+      font-size: 14px;
+    }
+    input:focus {
+      border-color: #4CAF50;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    button#send {
+      background: #4CAF50;
+      color: #fff;
+    }
+    button#clear {
+      background: #d32f2f;
+      color: #fff;
+      padding: 10px 14px;
+    }
+    button#speak-all {
+      background: #333;
+      color: #4CAF50;
+      padding: 10px 14px;
+      font-size: 16px;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #chat::-webkit-scrollbar {
+      width: 3px;
+    }
+    #chat::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    #chat::-webkit-scrollbar-thumb {
+      background: #4CAF50;
+      border-radius: 10px;
+    }
+    .help {
+      color: #666;
+      font-size: 11px;
+      padding: 4px 0;
+      text-align: center;
+      border-top: 1px solid #222;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .footer-actions {
+      display: flex;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⌚ MiniMataburro</h1>
+  <p>IA concisa · respuestas directas</p>
+</header>
+
+<div id="chat"></div>
+
+<footer>
+  <button id="clear" aria-label="Limpiar">✕</button>
+  <input type="text" id="input" placeholder="Pregunta..." autofocus>
+  <div class="footer-actions">
+    <button id="speak-all" aria-label="Leer todo">🔊</button>
+    <button id="send">➤</button>
+  </div>
+</footer>
+
+<div class="help">Toca 🔊 para leer · Dictado disponible en watch</div>
+
+<script>
+  // ============ ELEMENTOS ============
+  const chatDiv = document.getElementById('chat');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send');
+  const clearBtn = document.getElementById('clear');
+  const speakAllBtn = document.getElementById('speak-all');
+
+  // ============ HISTORIAL ============
+  let messages = [];
+
+  function load() {
+    const saved = localStorage.getItem('minimataburro_messages');
+    if (saved) {
+      messages = JSON.parse(saved);
+      render();
+    } else {
+      messages = [{ role: 'ai', content: 'Pregunta directa.' }];
+      save();
+      render();
+    }
+  }
+
+  function save() {
+    localStorage.setItem('minimataburro_messages', JSON.stringify(messages));
+  }
+
+  function render() {
+    chatDiv.innerHTML = '';
+    messages.forEach((msg, index) => {
+      const div = document.createElement('div');
+      div.className = msg.role;
+      
+      if (msg.role === 'ai') {
+        // Botón de "leer" para cada respuesta
+        const textSpan = document.createElement('span');
+        textSpan.textContent = msg.content;
+        div.appendChild(textSpan);
+        
+        const speakBtn = document.createElement('button');
+        speakBtn.className = 'speak-btn';
+        speakBtn.textContent = '🔊';
+        speakBtn.setAttribute('aria-label', 'Escuchar respuesta');
+        speakBtn.onclick = (e) => {
+          e.stopPropagation();
+          speakText(msg.content);
+        };
+        div.appendChild(speakBtn);
+      } else {
+        div.textContent = msg.content;
+      }
+      
+      chatDiv.appendChild(div);
+    });
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  }
+
+  // ============ SÍNTESIS DE VOZ ============
+  let voicesLoaded = false;
+  let spanishVoice = null;
+
+  function loadVoices() {
+    return new Promise((resolve) => {
+      if (voicesLoaded) {
+        resolve();
+        return;
+      }
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        spanishVoice = voices.find(v => v.lang.startsWith('es'));
+        voicesLoaded = true;
+        resolve();
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+          const voices = window.speechSynthesis.getVoices();
+          spanishVoice = voices.find(v => v.lang.startsWith('es'));
+          voicesLoaded = true;
+          resolve();
+        };
+      }
+    });
+  }
+
+  function speakText(text) {
+    if (!('speechSynthesis' in window)) {
+      console.log('Voz no soportada');
+      return;
+    }
+
+    // Cancelar cualquier voz en curso
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    if (spanishVoice) {
+      utterance.voice = spanishVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function speakLastResponse() {
+    // Buscar el último mensaje de la IA
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'ai') {
+        speakText(messages[i].content);
+        return;
+      }
+    }
+  }
+
+  // Cargar voces al inicio
+  loadVoices();
+
+  // ============ ENVIAR MENSAJE ============
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    messages.push({ role: 'user', content: text });
+    save();
+    render();
+    input.value = '';
+    sendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/minimataburro/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: messages.map(m => ({ role: m.role, content: m.content })) })
+      });
+      const data = await res.json();
+      if (data.response) {
+        messages.push({ role: 'ai', content: data.response });
+        save();
+        render();
+        // Leer automáticamente la respuesta
+        speakText(data.response);
+      } else {
+        throw new Error('Sin respuesta');
+      }
+    } catch (err) {
+      messages.push({ role: 'ai', content: '⚠️ Error' });
+      save();
+      render();
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  // ============ EVENTOS ============
+  clearBtn.onclick = () => {
+    window.speechSynthesis.cancel();
+    messages = [{ role: 'ai', content: 'Pregunta directa.' }];
+    save();
+    render();
+    input.focus();
+  };
+
+  speakAllBtn.onclick = speakLastResponse;
+
+  sendBtn.onclick = sendMessage;
+  input.onkeypress = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+
+  // ============ INICIALIZAR ============
+  load();
+  input.focus();
+</script>
+</body>
+</html>
