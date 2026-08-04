@@ -212,7 +212,6 @@
       div.className = msg.role;
       
       if (msg.role === 'ai') {
-        // Botón de "leer" para cada respuesta
         const textSpan = document.createElement('span');
         textSpan.textContent = msg.content;
         div.appendChild(textSpan);
@@ -267,7 +266,6 @@
       return;
     }
 
-    // Cancelar cualquier voz en curso
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -284,7 +282,6 @@
   }
 
   function speakLastResponse() {
-    // Buscar el último mensaje de la IA
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].role === 'ai') {
         speakText(messages[i].content);
@@ -293,7 +290,6 @@
     }
   }
 
-  // Cargar voces al inicio
   loadVoices();
 
   // ============ ENVIAR MENSAJE ============
@@ -308,22 +304,25 @@
     sendBtn.disabled = true;
 
     try {
-      const res = await fetch('/api/minimataburro/chat', {
+      // 🔴 IMPORTANTE: Esta es la ruta CORRECTA para proyecto independiente
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: messages.map(m => ({ role: m.role, content: m.content })) })
       });
+      
       const data = await res.json();
+      
       if (data.response) {
         messages.push({ role: 'ai', content: data.response });
         save();
         render();
-        // Leer automáticamente la respuesta
         speakText(data.response);
       } else {
         throw new Error('Sin respuesta');
       }
     } catch (err) {
+      console.error('Error:', err);
       messages.push({ role: 'ai', content: '⚠️ Error' });
       save();
       render();
