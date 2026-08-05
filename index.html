@@ -8,7 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%;
-      overflow: hidden; /* Evita desplazamiento de la página */
+      overflow: hidden; /* ← Fija toda la página */
       font-family: -apple-system, 'Helvetica Neue', sans-serif;
       background: #1a1a1a;
       color: #ffffff;
@@ -19,25 +19,26 @@
       padding: 6px 8px 4px 8px;
       max-width: 400px;
       margin: 0 auto;
+      height: 100vh;
     }
     #chat {
       flex: 1;
       overflow-y: auto;
-      -webkit-overflow-scrolling: touch; /* Suavizado en iOS/watchOS */
+      -webkit-overflow-scrolling: touch; /* Suavizado en watch */
       padding: 6px 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
       min-height: 0;
-      touch-action: pan-y; /* Permite solo desplazamiento vertical */
+      touch-action: pan-y; /* Solo desplazamiento vertical */
     }
     .user {
       align-self: flex-end;
       background: #2a7a2a;
       color: #fff;
-      padding: 10px 16px;
+      padding: 8px 14px;
       border-radius: 16px 16px 0 16px;
-      font-size: 24px; /* Mismo tamaño que el título */
+      font-size: 20px; /* Achicado */
       max-width: 80%;
       word-wrap: break-word;
       line-height: 1.4;
@@ -46,9 +47,9 @@
       align-self: flex-start;
       background: #2a2a2a;
       color: #ddd;
-      padding: 10px 16px;
+      padding: 8px 14px;
       border-radius: 16px 16px 16px 0;
-      font-size: 24px; /* Mismo tamaño que el título */
+      font-size: 20px; /* Achicado */
       max-width: 85%;
       word-wrap: break-word;
       line-height: 1.5;
@@ -64,7 +65,7 @@
       cursor: pointer;
       margin-left: 8px;
       vertical-align: middle;
-      touch-action: manipulation; /* Mejora respuesta táctil */
+      touch-action: manipulation;
     }
     .ai .speak-btn:active { background: #555; }
     footer {
@@ -74,6 +75,7 @@
       border-top: 1px solid #333;
       flex-shrink: 0;
       align-items: center;
+      background: #1a1a1a; /* Fondo consistente */
     }
     input {
       flex: 1;
@@ -82,13 +84,13 @@
       border-radius: 20px;
       background: #2a2a2a;
       color: #fff;
-      font-size: 20px;
+      font-size: 18px;
       outline: none;
       min-width: 0;
       height: 44px;
       touch-action: manipulation;
     }
-    input::placeholder { color: #666; font-size: 18px; }
+    input::placeholder { color: #666; font-size: 16px; }
     input:focus { border-color: #4CAF50; }
     button {
       padding: 6px 12px;
@@ -114,7 +116,7 @@
 </head>
 <body>
 
-<!-- SIN HEADER, SIN AYUDA -->
+<!-- SIN HEADER, SIN AYUDA, SIN MENSAJE INICIAL -->
 
 <div id="chat"></div>
 
@@ -135,12 +137,11 @@
   const clearBtn = document.getElementById('clear');
   const speakAllBtn = document.getElementById('speak-all');
 
-  // ============ HISTORIAL (siempre nuevo) ============
+  // ============ HISTORIAL (sin mensaje inicial) ============
   let messages = [];
 
   function iniciarChat() {
-    // Siempre comienza con este mensaje, sin guardar nada
-    messages = [{ role: 'ai', content: 'Pregunta directa.' }];
+    messages = []; // Vacío, sin "Pregunta directa"
     render();
   }
 
