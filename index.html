@@ -40,7 +40,7 @@
       color: #fff;
       padding: 10px 16px;
       border-radius: 16px 16px 0 16px;
-      font-size: 30px; /* +50% (20px → 30px) */
+      font-size: 30px;
       max-width: 80%;
       word-wrap: break-word;
       line-height: 1.4;
@@ -51,7 +51,7 @@
       color: #ddd;
       padding: 10px 16px;
       border-radius: 16px 16px 16px 0;
-      font-size: 30px; /* +50% */
+      font-size: 30px;
       max-width: 85%;
       word-wrap: break-word;
       line-height: 1.5;
@@ -61,11 +61,11 @@
       color: #4CAF50;
       border: none;
       border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
       cursor: pointer;
-      margin-left: 10px;
+      margin-left: 8px;
       vertical-align: middle;
     }
     .ai .speak-btn:active { background: #555; }
@@ -75,7 +75,7 @@
     }
     footer {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       padding: 4px 0 2px 0;
       border-top: 1px solid #333;
       flex-shrink: 0;
@@ -83,32 +83,32 @@
     }
     input {
       flex: 1;
-      padding: 12px 16px;
+      padding: 8px 12px;
       border: 1px solid #444;
-      border-radius: 24px;
+      border-radius: 20px;
       background: #2a2a2a;
       color: #fff;
       font-size: 24px;
       outline: none;
       min-width: 0;
-      height: 56px;
+      height: 44px;
     }
     input::placeholder { color: #666; font-size: 20px; }
     input:focus { border-color: #4CAF50; }
     button {
-      padding: 8px 16px;
+      padding: 6px 12px;
       border: none;
-      border-radius: 24px;
-      font-size: 20px;
+      border-radius: 20px;
+      font-size: 18px;
       font-weight: 600;
       cursor: pointer;
       flex-shrink: 0;
-      height: 56px;
-      min-width: 56px;
+      height: 44px;
+      min-width: 44px;
     }
-    button#send { background: #4CAF50; color: #fff; font-size: 24px; }
-    button#clear { background: #d32f2f; color: #fff; font-size: 20px; min-width: 56px; }
-    button#speak-all { background: #333; color: #4CAF50; font-size: 24px; min-width: 56px; }
+    button#send { background: #4CAF50; color: #fff; font-size: 20px; }
+    button#clear { background: #d32f2f; color: #fff; font-size: 18px; min-width: 44px; }
+    button#speak-all { background: #333; color: #4CAF50; font-size: 20px; min-width: 44px; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     #chat::-webkit-scrollbar { width: 4px; }
     #chat::-webkit-scrollbar-track { background: #1a1a1a; }
@@ -122,13 +122,7 @@
       margin-top: 2px;
       flex-shrink: 0;
     }
-    .footer-actions { display: flex; gap: 8px; }
-    .voice-status {
-      color: #ffaa00;
-      font-size: 14px;
-      text-align: center;
-      padding: 4px 0;
-    }
+    .footer-actions { display: flex; gap: 6px; }
   </style>
 </head>
 <body>
@@ -139,7 +133,6 @@
 </header>
 
 <div id="chat"></div>
-<div id="voice-status" class="voice-status"></div>
 
 <footer>
   <button id="clear" aria-label="Limpiar">✕</button>
@@ -159,7 +152,6 @@
   const sendBtn = document.getElementById('send');
   const clearBtn = document.getElementById('clear');
   const speakAllBtn = document.getElementById('speak-all');
-  const voiceStatus = document.getElementById('voice-status');
 
   // ============ HISTORIAL ============
   let messages = [];
@@ -209,42 +201,19 @@
 
   // ============ SÍNTESIS DE VOZ ============
   let spanishVoice = null;
-  let voiceSupported = true;
 
   function loadVoices() {
-    try {
-      const voices = window.speechSynthesis.getVoices();
-      spanishVoice = voices.find(v => v.lang.startsWith('es'));
-      voiceStatus.textContent = '🔊 Voz disponible';
-      voiceStatus.style.color = '#4CAF50';
-    } catch (e) {
-      voiceSupported = false;
-      voiceStatus.textContent = '🔇 Voz no soportada en este dispositivo';
-      voiceStatus.style.color = '#ff6b6b';
-    }
+    const voices = window.speechSynthesis.getVoices();
+    spanishVoice = voices.find(v => v.lang.startsWith('es'));
   }
 
   if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = loadVoices;
-    // Forzar carga inicial
     setTimeout(loadVoices, 500);
-  } else {
-    voiceSupported = false;
-    voiceStatus.textContent = '🔇 Voz no soportada en este navegador';
-    voiceStatus.style.color = '#ff6b6b';
   }
 
   function speakText(text) {
-    if (!voiceSupported || !('speechSynthesis' in window)) {
-      voiceStatus.textContent = '🔇 Voz no disponible';
-      voiceStatus.style.color = '#ff6b6b';
-      setTimeout(() => {
-        voiceStatus.textContent = voiceSupported ? '🔊 Voz disponible' : '🔇 Voz no soportada';
-        voiceStatus.style.color = voiceSupported ? '#4CAF50' : '#ff6b6b';
-      }, 2000);
-      return;
-    }
-
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES';
@@ -252,24 +221,6 @@
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
     if (spanishVoice) utterance.voice = spanishVoice;
-    
-    utterance.onstart = () => {
-      voiceStatus.textContent = '🔊 Reproduciendo...';
-      voiceStatus.style.color = '#ffd43b';
-    };
-    utterance.onend = () => {
-      voiceStatus.textContent = '🔊 Voz disponible';
-      voiceStatus.style.color = '#4CAF50';
-    };
-    utterance.onerror = () => {
-      voiceStatus.textContent = '🔇 Error al reproducir';
-      voiceStatus.style.color = '#ff6b6b';
-      setTimeout(() => {
-        voiceStatus.textContent = voiceSupported ? '🔊 Voz disponible' : '🔇 Voz no soportada';
-        voiceStatus.style.color = voiceSupported ? '#4CAF50' : '#ff6b6b';
-      }, 2000);
-    };
-    
     window.speechSynthesis.speak(utterance);
   }
 
@@ -306,7 +257,7 @@
         messages.push({ role: 'ai', content: data.response });
         save();
         render();
-        // speakText(data.response); // Opcional: lectura automática
+        // speakText(data.response); // Descomentar para lectura automática
       } else if (data.error) {
         console.warn('Error de API:', data.error);
         messages.push({ role: 'ai', content: '⚠️ Error' });
