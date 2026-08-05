@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MiniMataburro</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, 'Helvetica Neue', sans-serif;
       background: #1a1a1a;
@@ -26,15 +22,8 @@
       padding: 8px 0 4px 0;
       border-bottom: 1px solid #333;
     }
-    header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #4CAF50;
-    }
-    header p {
-      font-size: 11px;
-      color: #888;
-    }
+    header h1 { font-size: 18px; font-weight: 600; color: #4CAF50; }
+    header p { font-size: 11px; color: #888; }
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -77,9 +66,7 @@
       margin-left: 8px;
       vertical-align: middle;
     }
-    .ai .speak-btn:active {
-      background: #555;
-    }
+    .ai .speak-btn:active { background: #555; }
     footer {
       display: flex;
       gap: 6px;
@@ -98,13 +85,8 @@
       outline: none;
       min-width: 0;
     }
-    input::placeholder {
-      color: #666;
-      font-size: 14px;
-    }
-    input:focus {
-      border-color: #4CAF50;
-    }
+    input::placeholder { color: #666; font-size: 14px; }
+    input:focus { border-color: #4CAF50; }
     button {
       padding: 10px 16px;
       border: none;
@@ -114,35 +96,13 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    button#send {
-      background: #4CAF50;
-      color: #fff;
-    }
-    button#clear {
-      background: #d32f2f;
-      color: #fff;
-      padding: 10px 14px;
-    }
-    button#speak-all {
-      background: #333;
-      color: #4CAF50;
-      padding: 10px 14px;
-      font-size: 16px;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    #chat::-webkit-scrollbar {
-      width: 3px;
-    }
-    #chat::-webkit-scrollbar-track {
-      background: #1a1a1a;
-    }
-    #chat::-webkit-scrollbar-thumb {
-      background: #4CAF50;
-      border-radius: 10px;
-    }
+    button#send { background: #4CAF50; color: #fff; }
+    button#clear { background: #d32f2f; color: #fff; padding: 10px 14px; }
+    button#speak-all { background: #333; color: #4CAF50; padding: 10px 14px; font-size: 16px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #chat::-webkit-scrollbar { width: 3px; }
+    #chat::-webkit-scrollbar-track { background: #1a1a1a; }
+    #chat::-webkit-scrollbar-thumb { background: #4CAF50; border-radius: 10px; }
     .help {
       color: #666;
       font-size: 11px;
@@ -152,10 +112,7 @@
       margin-top: 4px;
       flex-shrink: 0;
     }
-    .footer-actions {
-      display: flex;
-      gap: 6px;
-    }
+    .footer-actions { display: flex; gap: 6px; }
   </style>
 </head>
 <body>
@@ -193,12 +150,11 @@
     const saved = localStorage.getItem('minimataburro_messages');
     if (saved) {
       messages = JSON.parse(saved);
-      render();
     } else {
       messages = [{ role: 'ai', content: 'Pregunta directa.' }];
-      save();
-      render();
     }
+    render();
+    save();
   }
 
   function save() {
@@ -207,7 +163,7 @@
 
   function render() {
     chatDiv.innerHTML = '';
-    messages.forEach((msg, index) => {
+    messages.forEach((msg) => {
       const div = document.createElement('div');
       div.className = msg.role;
       
@@ -219,7 +175,6 @@
         const speakBtn = document.createElement('button');
         speakBtn.className = 'speak-btn';
         speakBtn.textContent = '🔊';
-        speakBtn.setAttribute('aria-label', 'Escuchar respuesta');
         speakBtn.onclick = (e) => {
           e.stopPropagation();
           speakText(msg.content);
@@ -235,49 +190,24 @@
   }
 
   // ============ SÍNTESIS DE VOZ ============
-  let voicesLoaded = false;
   let spanishVoice = null;
 
   function loadVoices() {
-    return new Promise((resolve) => {
-      if (voicesLoaded) {
-        resolve();
-        return;
-      }
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        spanishVoice = voices.find(v => v.lang.startsWith('es'));
-        voicesLoaded = true;
-        resolve();
-      } else {
-        window.speechSynthesis.onvoiceschanged = () => {
-          const voices = window.speechSynthesis.getVoices();
-          spanishVoice = voices.find(v => v.lang.startsWith('es'));
-          voicesLoaded = true;
-          resolve();
-        };
-      }
-    });
+    const voices = window.speechSynthesis.getVoices();
+    spanishVoice = voices.find(v => v.lang.startsWith('es'));
   }
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
 
   function speakText(text) {
-    if (!('speechSynthesis' in window)) {
-      console.log('Voz no soportada');
-      return;
-    }
-
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES';
     utterance.rate = 0.8;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-
-    if (spanishVoice) {
-      utterance.voice = spanishVoice;
-    }
-
+    if (spanishVoice) utterance.voice = spanishVoice;
     window.speechSynthesis.speak(utterance);
   }
 
@@ -289,8 +219,6 @@
       }
     }
   }
-
-  loadVoices();
 
   // ============ ENVIAR MENSAJE ============
   async function sendMessage() {
@@ -304,7 +232,6 @@
     sendBtn.disabled = true;
 
     try {
-      // 🔴 IMPORTANTE: Esta es la ruta CORRECTA para proyecto independiente
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -318,6 +245,8 @@
         save();
         render();
         speakText(data.response);
+      } else if (data.error) {
+        throw new Error(data.error.message || 'Error de API');
       } else {
         throw new Error('Sin respuesta');
       }
@@ -342,7 +271,6 @@
   };
 
   speakAllBtn.onclick = speakLastResponse;
-
   sendBtn.onclick = sendMessage;
   input.onkeypress = (e) => {
     if (e.key === 'Enter') sendMessage();
