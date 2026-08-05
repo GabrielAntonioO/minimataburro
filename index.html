@@ -84,42 +84,45 @@
       max-width: 400px;
       margin: 0 auto;
       display: flex;
-      gap: 6px;
-      padding: 4px 8px 2px 8px;
+      gap: 4px;
+      padding: 4px 6px 2px 6px;
       border-top: 1px solid #333;
       align-items: center;
       background: #1a1a1a;
     }
     input {
-      flex: 1;
-      padding: 8px 12px;
+      flex-shrink: 0;
+      width: 48px;              /* Chico a propósito: solo indica que hay texto dictado */
+      padding: 0 6px;
       border: 1px solid #444;
-      border-radius: 20px;
+      border-radius: 16px;
       background: #2a2a2a;
       color: #fff;
-      font-size: 18px;
+      font-size: 13px;
       outline: none;
-      height: 44px;
+      height: 40px;
       touch-action: manipulation;
     }
-    input::placeholder { color: #666; font-size: 16px; }
+    input::placeholder { color: #666; font-size: 11px; }
     input:focus { border-color: #4CAF50; }
 
     button {
-      padding: 6px 12px;
+      flex-shrink: 0;
+      padding: 0;
       border: none;
       border-radius: 20px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      height: 44px;
-      min-width: 44px;
+      height: 40px;
+      min-width: 40px;
       touch-action: manipulation;
     }
-    button#send { background: #4CAF50; color: #fff; font-size: 20px; }
-    button#clear { background: #d32f2f; color: #fff; font-size: 18px; }
-    button#speak-all { background: #333; color: #4CAF50; font-size: 20px; }
+    button#send { background: #4CAF50; color: #fff; font-size: 18px; }
+    button#clear { background: #d32f2f; color: #fff; font-size: 16px; }
+    button#speak-all { background: #333; color: #4CAF50; font-size: 18px; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .footer-actions { display: flex; gap: 4px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -130,7 +133,7 @@
 
   <footer>
     <button id="clear" aria-label="Limpiar">✕</button>
-    <input type="text" id="input" placeholder="Pregunta..." autofocus>
+    <input type="text" id="input" placeholder="..." autofocus>
     <div class="footer-actions">
       <button id="speak-all" aria-label="Leer todo">🔊</button>
       <button id="send">➤</button>
