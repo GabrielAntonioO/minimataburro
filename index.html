@@ -151,6 +151,7 @@
     if (saved) {
       messages = JSON.parse(saved);
     } else {
+      // SOLO MENSAJE ESTÁTICO - SIN LLAMADA A LA API
       messages = [{ role: 'ai', content: 'Pregunta directa.' }];
     }
     render();
@@ -223,7 +224,10 @@
   // ============ ENVIAR MENSAJE ============
   async function sendMessage() {
     const text = input.value.trim();
-    if (!text) return;
+    // ✅ VALIDACIÓN: Si no hay texto, NO enviar
+    if (!text) {
+      return;
+    }
 
     messages.push({ role: 'user', content: text });
     save();
@@ -246,7 +250,10 @@
         render();
         speakText(data.response);
       } else if (data.error) {
-        throw new Error(data.error.message || 'Error de API');
+        console.warn('Error de API:', data.error);
+        messages.push({ role: 'ai', content: '⚠️ Error: ' + (data.error.message || 'sin detalles') });
+        save();
+        render();
       } else {
         throw new Error('Sin respuesta');
       }
