@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   // Prompt para respuestas concisas (Apple Watch)
-  const systemPrompt = `Eres un asistente IA para Apple Watch. Responde de forma EXTREMADAMENTE CONCISA (máximo 2 oraciones). Directa, sin rodeos, sin amabilidades, sin cortesías. Ve al grano. Sin emojis, sin saludos, sin despedidas.`;
+  const systemPrompt = `Eres un asistente IA para Apple Watch. Responde de forma EXTREMADAMENTE CONCISA (máximo 2 oraciones). Directa, sin rodeos, sin amabilidades, sin cortesías. Ve al grano. Sin emojis, sin saludos, sin despedidas. Pero si te agradecen, no seas descortes. Solo responde corto, por ejemplo, si te dicen gracias, di De nada`;
 
   try {
     const groqMessages = [
