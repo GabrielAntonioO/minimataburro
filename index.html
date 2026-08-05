@@ -1,44 +1,48 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- Configuración básica para Apple Watch -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MiniMataburro</title>
   <style>
+    /* === RESET Y ESTRUCTURA === */
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     html, body {
       height: 100%;
-      overflow: hidden; /* ← Fija toda la página */
+      overflow-x: hidden;          /* Bloquea el desplazamiento horizontal en toda la página */
+      overflow-y: auto;            /* El documento entero es lo único que se desplaza (vertical) */
+      -webkit-overflow-scrolling: touch; /* Suavizado en watchOS */
+      touch-action: pan-y;         /* Solo permite gesto vertical en toda la página */
       font-family: -apple-system, 'Helvetica Neue', sans-serif;
       background: #1a1a1a;
       color: #ffffff;
     }
+
     body {
-      display: flex;
-      flex-direction: column;
-      padding: 6px 8px 4px 8px;
-      max-width: 400px;
+      max-width: 400px;            /* Para que en pantallas grandes no se estire */
       margin: 0 auto;
-      height: 100vh;
+      padding: 6px 8px 60px 8px;   /* padding-bottom = alto aprox. del footer fijo */
+      min-height: 100%;
     }
+
+    /* === ÁREA DE CHAT (ya no tiene su propio scroll) === */
     #chat {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch; /* Suavizado en watch */
-      padding: 6px 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      min-height: 0;
-      touch-action: pan-y; /* Solo desplazamiento vertical */
+      padding: 6px 0;
     }
+
+    /* === BURBUJAS DE MENSAJES === */
     .user {
       align-self: flex-end;
       background: #2a7a2a;
       color: #fff;
       padding: 8px 14px;
       border-radius: 16px 16px 0 16px;
-      font-size: 20px; /* Achicado */
+      font-size: 20px;           /* Tamaño legible en watch */
       max-width: 80%;
       word-wrap: break-word;
       line-height: 1.4;
@@ -49,11 +53,13 @@
       color: #ddd;
       padding: 8px 14px;
       border-radius: 16px 16px 16px 0;
-      font-size: 20px; /* Achicado */
+      font-size: 20px;
       max-width: 85%;
       word-wrap: break-word;
       line-height: 1.5;
     }
+
+    /* === BOTÓN DE VOZ DENTRO DE CADA RESPUESTA === */
     .ai .speak-btn {
       background: #333;
       color: #4CAF50;
@@ -65,17 +71,24 @@
       cursor: pointer;
       margin-left: 8px;
       vertical-align: middle;
-      touch-action: manipulation;
+      touch-action: manipulation; /* Mejora respuesta táctil */
     }
     .ai .speak-btn:active { background: #555; }
+
+    /* === PIE DE PÁGINA FIJO (input y botones) === */
     footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 400px;
+      margin: 0 auto;
       display: flex;
       gap: 6px;
-      padding: 4px 0 2px 0;
+      padding: 4px 8px 2px 8px;
       border-top: 1px solid #333;
-      flex-shrink: 0;
       align-items: center;
-      background: #1a1a1a; /* Fondo consistente */
+      background: #1a1a1a;
     }
     input {
       flex: 1;
@@ -86,12 +99,12 @@
       color: #fff;
       font-size: 18px;
       outline: none;
-      min-width: 0;
       height: 44px;
       touch-action: manipulation;
     }
     input::placeholder { color: #666; font-size: 16px; }
     input:focus { border-color: #4CAF50; }
+
     button {
       padding: 6px 12px;
       border: none;
@@ -99,170 +112,201 @@
       font-size: 18px;
       font-weight: 600;
       cursor: pointer;
-      flex-shrink: 0;
       height: 44px;
       min-width: 44px;
       touch-action: manipulation;
     }
     button#send { background: #4CAF50; color: #fff; font-size: 20px; }
-    button#clear { background: #d32f2f; color: #fff; font-size: 18px; min-width: 44px; }
-    button#speak-all { background: #333; color: #4CAF50; font-size: 20px; min-width: 44px; }
+    button#clear { background: #d32f2f; color: #fff; font-size: 18px; }
+    button#speak-all { background: #333; color: #4CAF50; font-size: 20px; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    /* Scrollbar estilizada */
-    #chat::-webkit-scrollbar { width: 4px; }
-    #chat::-webkit-scrollbar-track { background: #1a1a1a; }
-    #chat::-webkit-scrollbar-thumb { background: #4CAF50; border-radius: 10px; }
   </style>
 </head>
 <body>
 
-<!-- SIN HEADER, SIN AYUDA, SIN MENSAJE INICIAL -->
+  <!-- SIN HEADER, SIN MENSAJE INICIAL, SIN TEXTO DE AYUDA -->
 
-<div id="chat"></div>
+  <div id="chat"></div>
 
-<footer>
-  <button id="clear" aria-label="Limpiar">✕</button>
-  <input type="text" id="input" placeholder="Pregunta..." autofocus>
-  <div class="footer-actions">
-    <button id="speak-all" aria-label="Leer todo">🔊</button>
-    <button id="send">➤</button>
-  </div>
-</footer>
+  <footer>
+    <button id="clear" aria-label="Limpiar">✕</button>
+    <input type="text" id="input" placeholder="Pregunta..." autofocus>
+    <div class="footer-actions">
+      <button id="speak-all" aria-label="Leer todo">🔊</button>
+      <button id="send">➤</button>
+    </div>
+  </footer>
 
-<script>
-  // ============ ELEMENTOS ============
-  const chatDiv = document.getElementById('chat');
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('send');
-  const clearBtn = document.getElementById('clear');
-  const speakAllBtn = document.getElementById('speak-all');
+  <script>
+    // ============================================================
+    // 1. ELEMENTOS DEL DOM
+    // ============================================================
+    const chatDiv = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const clearBtn = document.getElementById('clear');
+    const speakAllBtn = document.getElementById('speak-all');
 
-  // ============ HISTORIAL (sin mensaje inicial) ============
-  let messages = [];
+    // ============================================================
+    // 2. ESTADO DEL CHAT (sin localStorage)
+    // ============================================================
+    let messages = []; // Array de objetos { role: 'user'|'ai', content: 'texto' }
 
-  function iniciarChat() {
-    messages = []; // Vacío, sin "Pregunta directa"
-    render();
-  }
+    // Inicia el chat vacío (sin mensaje de bienvenida)
+    function iniciarChat() {
+      messages = [];
+      render();
+    }
 
-  function render() {
-    chatDiv.innerHTML = '';
-    messages.forEach((msg) => {
-      const div = document.createElement('div');
-      div.className = msg.role;
-      
-      if (msg.role === 'ai') {
-        const textSpan = document.createElement('span');
-        textSpan.textContent = msg.content;
-        div.appendChild(textSpan);
-        
-        const speakBtn = document.createElement('button');
-        speakBtn.className = 'speak-btn';
-        speakBtn.textContent = '🔊';
-        speakBtn.onclick = (e) => {
-          e.stopPropagation();
-          speakText(msg.content);
-        };
-        div.appendChild(speakBtn);
-      } else {
-        div.textContent = msg.content;
-      }
-      
-      chatDiv.appendChild(div);
-    });
-    chatDiv.scrollTop = chatDiv.scrollHeight;
-  }
+    // ============================================================
+    // 3. RENDERIZADO DE MENSAJES
+    // ============================================================
+    function render() {
+      chatDiv.innerHTML = '';
+      messages.forEach((msg) => {
+        const div = document.createElement('div');
+        div.className = msg.role; // 'user' o 'ai'
 
-  // ============ SÍNTESIS DE VOZ ============
-  let spanishVoice = null;
+        if (msg.role === 'ai') {
+          // Texto de la respuesta
+          const textSpan = document.createElement('span');
+          textSpan.textContent = msg.content;
+          div.appendChild(textSpan);
 
-  function loadVoices() {
-    const voices = window.speechSynthesis.getVoices();
-    spanishVoice = voices.find(v => v.lang.startsWith('es'));
-  }
+          // Botón para leer esta respuesta en voz alta
+          const speakBtn = document.createElement('button');
+          speakBtn.className = 'speak-btn';
+          speakBtn.textContent = '🔊';
+          speakBtn.onclick = (e) => {
+            e.stopPropagation();
+            speakText(msg.content);
+          };
+          div.appendChild(speakBtn);
+        } else {
+          // Mensaje de usuario (solo texto)
+          div.textContent = msg.content;
+        }
 
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    setTimeout(loadVoices, 500);
-  }
+        chatDiv.appendChild(div);
+      });
+      // Auto-scroll al final: ahora se hace sobre todo el documento,
+      // que es el único elemento con scroll real.
+      window.scrollTo(0, document.body.scrollHeight);
+    }
 
-  function speakText(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES';
-    utterance.rate = 0.8;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    if (spanishVoice) utterance.voice = spanishVoice;
-    window.speechSynthesis.speak(utterance);
-  }
+    // ============================================================
+    // 4. SÍNTESIS DE VOZ (Web Speech API)
+    // ============================================================
+    let spanishVoice = null;
 
-  function speakLastResponse() {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'ai') {
-        speakText(messages[i].content);
-        return;
+    // Carga las voces disponibles y busca una en español
+    function loadVoices() {
+      const voices = window.speechSynthesis.getVoices();
+      spanishVoice = voices.find(v => v.lang.startsWith('es'));
+    }
+
+    // Si el navegador soporta voz, configuramos el evento
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      setTimeout(loadVoices, 500); // Fallback para algunos navegadores
+    }
+
+    // Función para hablar un texto
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return; // Sin soporte, no hace nada
+      window.speechSynthesis.cancel(); // Corta cualquier voz anterior
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.8;   // Velocidad adecuada para claridad
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      if (spanishVoice) utterance.voice = spanishVoice;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Lee la última respuesta de la IA (botón global 🔊)
+    function speakLastResponse() {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'ai') {
+          speakText(messages[i].content);
+          return;
+        }
       }
     }
-  }
 
-  // ============ ENVIAR MENSAJE ============
-  async function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+    // ============================================================
+    // 5. ENVÍO DE MENSAJE AL BACKEND
+    // ============================================================
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return; // No envía mensajes vacíos
 
-    messages.push({ role: 'user', content: text });
-    render();
-    input.value = '';
-    sendBtn.disabled = true;
+      // Agregar mensaje del usuario al historial y renderizar
+      messages.push({ role: 'user', content: text });
+      render();
+      input.value = '';
+      sendBtn.disabled = true;
 
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: messages.map(m => ({ role: m.role, content: m.content })) })
-      });
-      
-      const data = await res.json();
-      
-      if (data.response) {
-        messages.push({ role: 'ai', content: data.response });
-        render();
-        // speakText(data.response); // Descomentar para lectura automática
-      } else if (data.error) {
-        console.warn('Error de API:', data.error);
+      try {
+        // Llamada al endpoint de Vercel
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: messages.map(m => ({ role: m.role, content: m.content }))
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.response) {
+          // Respuesta exitosa
+          messages.push({ role: 'ai', content: data.response });
+          render();
+          // (Opcional) speakText(data.response); // Lectura automática
+        } else if (data.error) {
+          console.warn('Error de API:', data.error);
+          messages.push({ role: 'ai', content: '⚠️ Error' });
+          render();
+        } else {
+          throw new Error('Sin respuesta');
+        }
+      } catch (err) {
+        console.error('Error:', err);
         messages.push({ role: 'ai', content: '⚠️ Error' });
         render();
-      } else {
-        throw new Error('Sin respuesta');
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
       }
-    } catch (err) {
-      console.error('Error:', err);
-      messages.push({ role: 'ai', content: '⚠️ Error' });
-      render();
-    } finally {
-      sendBtn.disabled = false;
-      input.focus();
     }
-  }
 
-  // ============ EVENTOS ============
-  clearBtn.onclick = () => {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    // ============================================================
+    // 6. EVENTOS DE INTERFAZ
+    // ============================================================
+    // Botón limpiar: borra el historial y reinicia el chat
+    clearBtn.onclick = () => {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      iniciarChat();
+      input.focus();
+    };
+
+    // Botón leer todo (última respuesta)
+    speakAllBtn.onclick = speakLastResponse;
+
+    // Botón enviar
+    sendBtn.onclick = sendMessage;
+
+    // Enviar con tecla Enter
+    input.onkeypress = (e) => {
+      if (e.key === 'Enter') sendMessage();
+    };
+
+    // ============================================================
+    // 7. INICIALIZACIÓN
+    // ============================================================
     iniciarChat();
     input.focus();
-  };
-
-  speakAllBtn.onclick = speakLastResponse;
-  sendBtn.onclick = sendMessage;
-  input.onkeypress = (e) => {
-    if (e.key === 'Enter') sendMessage();
-  };
-
-  // ============ INICIALIZAR ============
-  iniciarChat();
-  input.focus();
-</script>
+  </script>
 </body>
 </html>
