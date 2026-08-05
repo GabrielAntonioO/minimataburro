@@ -2,15 +2,16 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
+  // Si es GET, devuelve un mensaje de prueba
+  if (req.method === 'GET') {
+    return res.status(200).json({ mensaje: 'API de chat funcionando. Usa POST para preguntar.' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
   const { messages } = req.body;
-
-  if (!messages || !Array.isArray(messages)) {
-    return res.status(400).json({ error: 'Falta historial de mensajes' });
-  }
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -21,13 +22,13 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'llama-3.1-70b-versatile',
-        messages: [{ role: 'user', content: 'Hola, respondé "OK"' }],
-        max_tokens: 10
+        messages: [{ role: 'user', content: 'Decí "OK"' }],
+        max_tokens: 5
       })
     });
 
     const data = await response.json();
-    return res.status(200).json({ test: data });
+    return res.status(200).json(data);
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
