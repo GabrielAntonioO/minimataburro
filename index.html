@@ -14,6 +14,8 @@
       overflow-x: hidden;          /* Bloquea el desplazamiento horizontal en toda la página */
       overflow-y: auto;            /* El documento entero es lo único que se desplaza (vertical) */
       -webkit-overflow-scrolling: touch; /* Suavizado en watchOS */
+      -webkit-text-size-adjust: 100%;    /* Evita que WebKit infle el texto al reflowar contenido */
+      text-size-adjust: 100%;
       touch-action: pan-y;         /* Solo permite gesto vertical en toda la página */
       font-family: -apple-system, 'Helvetica Neue', sans-serif;
       background: #1a1a1a;
