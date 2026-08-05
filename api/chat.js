@@ -2,16 +2,13 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  // Si es GET, devuelve un mensaje de prueba
   if (req.method === 'GET') {
-    return res.status(200).json({ mensaje: 'API de chat funcionando. Usa POST para preguntar.' });
+    return res.status(200).json({ mensaje: 'API lista. Usa POST.' });
   }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
-
-  const { messages } = req.body;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
