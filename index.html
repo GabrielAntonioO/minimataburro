@@ -11,25 +11,25 @@
 
     html, body {
       height: 100%;
-      overflow-x: hidden;          /* Bloquea el desplazamiento horizontal en toda la página */
-      overflow-y: auto;            /* El documento entero es lo único que se desplaza (vertical) */
-      -webkit-overflow-scrolling: touch; /* Suavizado en watchOS */
-      -webkit-text-size-adjust: 100%;    /* Evita que WebKit infle el texto al reflowar contenido */
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
-      touch-action: pan-y;         /* Solo permite gesto vertical en toda la página */
+      touch-action: pan-y;
       font-family: -apple-system, 'Helvetica Neue', sans-serif;
       background: #1a1a1a;
       color: #ffffff;
     }
 
     body {
-      max-width: 400px;            /* Para que en pantallas grandes no se estire */
+      max-width: 400px;
       margin: 0 auto;
-      padding: 6px 8px 76px 8px;   /* padding-bottom = alto aprox. del footer fijo (ahora más grande) */
+      padding: 6px 8px 76px 8px;
       min-height: 100%;
     }
 
-    /* === ÁREA DE CHAT (ya no tiene su propio scroll) === */
+    /* === ÁREA DE CHAT === */
     #chat {
       display: flex;
       flex-direction: column;
@@ -44,7 +44,7 @@
       color: #fff;
       padding: 8px 14px;
       border-radius: 16px 16px 0 16px;
-      font-size: 20px;           /* Tamaño legible en watch */
+      font-size: 20px;
       max-width: 80%;
       word-wrap: break-word;
       line-height: 1.4;
@@ -73,11 +73,11 @@
       cursor: pointer;
       margin-left: 8px;
       vertical-align: middle;
-      touch-action: manipulation; /* Mejora respuesta táctil */
+      touch-action: manipulation;
     }
     .ai .speak-btn:active { background: #555; }
 
-    /* === PIE DE PÁGINA FIJO (input y botones) === */
+    /* === PIE DE PÁGINA FIJO === */
     footer {
       position: fixed;
       bottom: 0;
@@ -92,9 +92,10 @@
       align-items: center;
       background: #1a1a1a;
     }
+
     input {
       flex-shrink: 0;
-      width: 96px;              /* Chico a propósito: solo indica que hay texto dictado */
+      width: 96px;
       padding: 0 6px;
       border: 1px solid #444;
       border-radius: 16px;
@@ -121,7 +122,6 @@
       touch-action: manipulation;
     }
     button#send { background: #4CAF50; color: #fff; font-size: 27px; }
-    button#clear { background: #d32f2f; color: #fff; font-size: 24px; }
     button#speak-all { background: #333; color: #4CAF50; font-size: 27px; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     .footer-actions { display: flex; gap: 4px; flex-shrink: 0; }
@@ -129,12 +129,10 @@
 </head>
 <body>
 
-  <!-- SIN HEADER, SIN MENSAJE INICIAL, SIN TEXTO DE AYUDA -->
-
   <div id="chat"></div>
 
   <footer>
-    <button id="clear" aria-label="Limpiar">✕</button>
+    <!-- ⬇️ EL BOTÓN ROJO CON LA CRUZ (✕) HA SIDO ELIMINADO ⬇️ -->
     <input type="text" id="input" placeholder="..." autofocus>
     <div class="footer-actions">
       <button id="speak-all" aria-label="Leer todo">🔊</button>
@@ -149,28 +147,30 @@
     const chatDiv = document.getElementById('chat');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
-    const clearBtn = document.getElementById('clear');
     const speakAllBtn = document.getElementById('speak-all');
     const viewportMeta = document.getElementById('viewport-meta');
 
     // ============================================================
     // 1b. RESETEO FORZADO DE ZOOM (bug de dictado en watchOS/iOS)
     // ============================================================
-    // El dictado por voz es una función de accesibilidad que ignora
-    // "user-scalable=no" y hace zoom al insertar el texto reconocido.
-    // Truco: reescribir el meta viewport fuerza a WebKit a recalcular
-    // la escala y volver a 1.0.
     function resetZoom() {
+      input.blur();
+      if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+      }
       if (!viewportMeta) return;
       const content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
-      viewportMeta.setAttribute('content', content);
-      window.scrollTo(0, window.scrollY); // fuerza un repaint del viewport
-      setTimeout(() => {
+      const forceReflow = () => {
+        const parent = viewportMeta.parentNode;
+        parent.removeChild(viewportMeta);
         viewportMeta.setAttribute('content', content);
-      }, 50);
-      setTimeout(() => {
-        viewportMeta.setAttribute('content', content);
-      }, 300);
+        parent.appendChild(viewportMeta);
+      };
+      forceReflow();
+      setTimeout(forceReflow, 50);
+      setTimeout(forceReflow, 150);
+      setTimeout(forceReflow, 400);
+      setTimeout(forceReflow, 800);
     }
     input.addEventListener('input', resetZoom);
     input.addEventListener('blur', resetZoom);
@@ -179,9 +179,8 @@
     // ============================================================
     // 2. ESTADO DEL CHAT (sin localStorage)
     // ============================================================
-    let messages = []; // Array de objetos { role: 'user'|'ai', content: 'texto' }
+    let messages = [];
 
-    // Inicia el chat vacío (sin mensaje de bienvenida)
     function iniciarChat() {
       messages = [];
       render();
@@ -194,15 +193,13 @@
       chatDiv.innerHTML = '';
       messages.forEach((msg) => {
         const div = document.createElement('div');
-        div.className = msg.role; // 'user' o 'ai'
+        div.className = msg.role;
 
         if (msg.role === 'ai') {
-          // Texto de la respuesta
           const textSpan = document.createElement('span');
           textSpan.textContent = msg.content;
           div.appendChild(textSpan);
 
-          // Botón para leer esta respuesta en voz alta
           const speakBtn = document.createElement('button');
           speakBtn.className = 'speak-btn';
           speakBtn.textContent = '🔊';
@@ -212,14 +209,11 @@
           };
           div.appendChild(speakBtn);
         } else {
-          // Mensaje de usuario (solo texto)
           div.textContent = msg.content;
         }
 
         chatDiv.appendChild(div);
       });
-      // Auto-scroll al final: ahora se hace sobre todo el documento,
-      // que es el único elemento con scroll real.
       window.scrollTo(0, document.body.scrollHeight);
     }
 
@@ -228,32 +222,28 @@
     // ============================================================
     let spanishVoice = null;
 
-    // Carga las voces disponibles y busca una en español
     function loadVoices() {
       const voices = window.speechSynthesis.getVoices();
       spanishVoice = voices.find(v => v.lang.startsWith('es'));
     }
 
-    // Si el navegador soporta voz, configuramos el evento
     if ('speechSynthesis' in window) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
-      setTimeout(loadVoices, 500); // Fallback para algunos navegadores
+      setTimeout(loadVoices, 500);
     }
 
-    // Función para hablar un texto
     function speakText(text) {
-      if (!('speechSynthesis' in window)) return; // Sin soporte, no hace nada
-      window.speechSynthesis.cancel(); // Corta cualquier voz anterior
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
-      utterance.rate = 0.8;   // Velocidad adecuada para claridad
+      utterance.rate = 0.8;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       if (spanishVoice) utterance.voice = spanishVoice;
       window.speechSynthesis.speak(utterance);
     }
 
-    // Lee la última respuesta de la IA (botón global 🔊)
     function speakLastResponse() {
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'ai') {
@@ -268,16 +258,14 @@
     // ============================================================
     async function sendMessage() {
       const text = input.value.trim();
-      if (!text) return; // No envía mensajes vacíos
+      if (!text) return;
 
-      // Agregar mensaje del usuario al historial y renderizar
       messages.push({ role: 'user', content: text });
       render();
       input.value = '';
       sendBtn.disabled = true;
 
       try {
-        // Llamada al endpoint de Vercel
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -289,10 +277,8 @@
         const data = await res.json();
 
         if (data.response) {
-          // Respuesta exitosa
           messages.push({ role: 'ai', content: data.response });
           render();
-          // (Opcional) speakText(data.response); // Lectura automática
         } else if (data.error) {
           console.warn('Error de API:', data.error);
           messages.push({ role: 'ai', content: '⚠️ Error' });
@@ -313,20 +299,9 @@
     // ============================================================
     // 6. EVENTOS DE INTERFAZ
     // ============================================================
-    // Botón limpiar: borra el historial y reinicia el chat
-    clearBtn.onclick = () => {
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-      iniciarChat();
-      input.focus();
-    };
-
-    // Botón leer todo (última respuesta)
     speakAllBtn.onclick = speakLastResponse;
-
-    // Botón enviar
     sendBtn.onclick = sendMessage;
 
-    // Enviar con tecla Enter
     input.onkeypress = (e) => {
       if (e.key === 'Enter') sendMessage();
     };
