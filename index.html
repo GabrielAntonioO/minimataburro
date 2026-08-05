@@ -3,7 +3,7 @@
 <head>
   <!-- Configuración básica para Apple Watch -->
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" id="viewport-meta">
   <title>MiniMataburro</title>
   <style>
     /* === RESET Y ESTRUCTURA === */
@@ -151,6 +151,30 @@
     const sendBtn = document.getElementById('send');
     const clearBtn = document.getElementById('clear');
     const speakAllBtn = document.getElementById('speak-all');
+    const viewportMeta = document.getElementById('viewport-meta');
+
+    // ============================================================
+    // 1b. RESETEO FORZADO DE ZOOM (bug de dictado en watchOS/iOS)
+    // ============================================================
+    // El dictado por voz es una función de accesibilidad que ignora
+    // "user-scalable=no" y hace zoom al insertar el texto reconocido.
+    // Truco: reescribir el meta viewport fuerza a WebKit a recalcular
+    // la escala y volver a 1.0.
+    function resetZoom() {
+      if (!viewportMeta) return;
+      const content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
+      viewportMeta.setAttribute('content', content);
+      window.scrollTo(0, window.scrollY); // fuerza un repaint del viewport
+      setTimeout(() => {
+        viewportMeta.setAttribute('content', content);
+      }, 50);
+      setTimeout(() => {
+        viewportMeta.setAttribute('content', content);
+      }, 300);
+    }
+    input.addEventListener('input', resetZoom);
+    input.addEventListener('blur', resetZoom);
+    input.addEventListener('change', resetZoom);
 
     // ============================================================
     // 2. ESTADO DEL CHAT (sin localStorage)
