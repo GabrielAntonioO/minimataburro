@@ -136,7 +136,7 @@
     const viewportMeta = document.getElementById('viewport-meta');
 
     // ============================================================
-    // 1b. RESETEO FORZADO DE ZOOM
+    // 2. RESETEO DE ZOOM (dictado en watchOS)
     // ============================================================
     function resetZoom() {
       input.blur();
@@ -162,7 +162,7 @@
     input.addEventListener('change', resetZoom);
 
     // ============================================================
-    // 2. ESTADO DEL CHAT
+    // 3. ESTADO DEL CHAT
     // ============================================================
     let messages = [];
 
@@ -172,7 +172,7 @@
     }
 
     // ============================================================
-    // 3. RENDERIZADO
+    // 4. RENDERIZADO CON FILTRO DE <think>
     // ============================================================
     function render() {
       chatDiv.innerHTML = '';
@@ -181,8 +181,15 @@
         div.className = msg.role;
 
         if (msg.role === 'ai') {
+          // Limpiar cualquier residuo de <think>
+          let cleanContent = msg.content;
+          cleanContent = cleanContent.replace(/<think>[\s\S]*?<\/think>/g, '');
+          cleanContent = cleanContent.replace(/<\/think>/g, '');
+          cleanContent = cleanContent.replace(/<think>/g, '');
+          cleanContent = cleanContent.trim();
+
           const textSpan = document.createElement('span');
-          textSpan.textContent = msg.content;
+          textSpan.textContent = cleanContent;
           div.appendChild(textSpan);
 
           const speakBtn = document.createElement('button');
@@ -190,7 +197,7 @@
           speakBtn.textContent = '🔊';
           speakBtn.onclick = (e) => {
             e.stopPropagation();
-            speakText(msg.content);
+            speakText(cleanContent);
           };
           div.appendChild(speakBtn);
         } else {
@@ -203,7 +210,7 @@
     }
 
     // ============================================================
-    // 4. SÍNTESIS DE VOZ
+    // 5. SÍNTESIS DE VOZ
     // ============================================================
     let spanishVoice = null;
 
@@ -239,7 +246,7 @@
     }
 
     // ============================================================
-    // 5. ENVÍO DE MENSAJE (con manejo de errores mejorado)
+    // 6. ENVÍO DE MENSAJE
     // ============================================================
     async function sendMessage() {
       const text = input.value.trim();
@@ -283,7 +290,7 @@
     }
 
     // ============================================================
-    // 6. EVENTOS
+    // 7. EVENTOS
     // ============================================================
     speakAllBtn.onclick = speakLastResponse;
     sendBtn.onclick = sendMessage;
@@ -293,7 +300,7 @@
     };
 
     // ============================================================
-    // 7. INICIALIZACIÓN
+    // 8. INICIALIZACIÓN
     // ============================================================
     iniciarChat();
     input.focus();
