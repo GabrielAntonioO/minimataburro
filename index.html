@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- Configuración básica para Apple Watch -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" id="viewport-meta">
   <title>MiniMataburro</title>
   <style>
-    /* === RESET Y ESTRUCTURA === */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html, body {
       height: 100%;
       overflow-x: hidden;
@@ -21,23 +18,18 @@
       background: #1a1a1a;
       color: #ffffff;
     }
-
     body {
       max-width: 400px;
       margin: 0 auto;
       padding: 6px 8px 76px 8px;
       min-height: 100%;
     }
-
-    /* === ÁREA DE CHAT === */
     #chat {
       display: flex;
       flex-direction: column;
       gap: 10px;
       padding: 6px 0;
     }
-
-    /* === BURBUJAS DE MENSAJES === */
     .user {
       align-self: flex-end;
       background: #2a7a2a;
@@ -60,8 +52,6 @@
       word-wrap: break-word;
       line-height: 1.5;
     }
-
-    /* === BOTÓN DE VOZ DENTRO DE CADA RESPUESTA === */
     .ai .speak-btn {
       background: #333;
       color: #4CAF50;
@@ -76,8 +66,6 @@
       touch-action: manipulation;
     }
     .ai .speak-btn:active { background: #555; }
-
-    /* === PIE DE PÁGINA FIJO === */
     footer {
       position: fixed;
       bottom: 0;
@@ -92,7 +80,6 @@
       align-items: center;
       background: #1a1a1a;
     }
-
     input {
       flex-shrink: 0;
       width: 96px;
@@ -108,7 +95,6 @@
     }
     input::placeholder { color: #666; font-size: 11px; }
     input:focus { border-color: #4CAF50; }
-
     button {
       flex-shrink: 0;
       padding: 0;
@@ -132,7 +118,6 @@
   <div id="chat"></div>
 
   <footer>
-    <!-- ⬇️ EL BOTÓN ROJO CON LA CRUZ (✕) HA SIDO ELIMINADO ⬇️ -->
     <input type="text" id="input" placeholder="..." autofocus>
     <div class="footer-actions">
       <button id="speak-all" aria-label="Leer todo">🔊</button>
@@ -151,7 +136,7 @@
     const viewportMeta = document.getElementById('viewport-meta');
 
     // ============================================================
-    // 1b. RESETEO FORZADO DE ZOOM (bug de dictado en watchOS/iOS)
+    // 1b. RESETEO FORZADO DE ZOOM
     // ============================================================
     function resetZoom() {
       input.blur();
@@ -177,7 +162,7 @@
     input.addEventListener('change', resetZoom);
 
     // ============================================================
-    // 2. ESTADO DEL CHAT (sin localStorage)
+    // 2. ESTADO DEL CHAT
     // ============================================================
     let messages = [];
 
@@ -187,7 +172,7 @@
     }
 
     // ============================================================
-    // 3. RENDERIZADO DE MENSAJES
+    // 3. RENDERIZADO
     // ============================================================
     function render() {
       chatDiv.innerHTML = '';
@@ -218,7 +203,7 @@
     }
 
     // ============================================================
-    // 4. SÍNTESIS DE VOZ (Web Speech API)
+    // 4. SÍNTESIS DE VOZ
     // ============================================================
     let spanishVoice = null;
 
@@ -254,7 +239,7 @@
     }
 
     // ============================================================
-    // 5. ENVÍO DE MENSAJE AL BACKEND
+    // 5. ENVÍO DE MENSAJE (con manejo de errores mejorado)
     // ============================================================
     async function sendMessage() {
       const text = input.value.trim();
@@ -274,21 +259,22 @@
           })
         });
 
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error?.message || `Error ${res.status}`);
+        }
+
         const data = await res.json();
 
         if (data.response) {
           messages.push({ role: 'ai', content: data.response });
           render();
-        } else if (data.error) {
-          console.warn('Error de API:', data.error);
-          messages.push({ role: 'ai', content: '⚠️ Error' });
-          render();
         } else {
-          throw new Error('Sin respuesta');
+          throw new Error('Respuesta vacía');
         }
       } catch (err) {
-        console.error('Error:', err);
-        messages.push({ role: 'ai', content: '⚠️ Error' });
+        console.error('Error en sendMessage:', err);
+        messages.push({ role: 'ai', content: '⚠️ Error: ' + err.message });
         render();
       } finally {
         sendBtn.disabled = false;
@@ -297,7 +283,7 @@
     }
 
     // ============================================================
-    // 6. EVENTOS DE INTERFAZ
+    // 6. EVENTOS
     // ============================================================
     speakAllBtn.onclick = speakLastResponse;
     sendBtn.onclick = sendMessage;
