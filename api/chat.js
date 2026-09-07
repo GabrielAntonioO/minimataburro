@@ -13,7 +13,6 @@ export default async function handler(req, res) {
 
   const { messages } = req.body;
 
-  // Validación: debe haber mensajes y al menos uno de usuario
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'No hay mensaje del usuario' });
   }
@@ -23,7 +22,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Esperando mensaje del usuario' });
   }
 
-  // NUEVO PROMPT CON LAS REGLAS ACTUALIZADAS
   const systemPrompt = `Eres un asistente de IA optimizado para Apple Watch. Tu prioridad es responder de forma breve, clara y útil.
 
 Reglas:
@@ -57,7 +55,7 @@ Objetivo: maximizar la utilidad con la menor cantidad posible de palabras, sin q
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-70b-versatile', // ✅ CAMBIADO
         messages: groqMessages,
         temperature: 0.3,
         max_tokens: 256
@@ -70,10 +68,10 @@ Objetivo: maximizar la utilidad con la menor cantidad posible de palabras, sin q
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-    const respuestaFinal = aiResponse.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    let aiResponse = data.choices[0].message.content;
+    aiResponse = aiResponse.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
-    return res.status(200).json({ response: respuestaFinal });
+    return res.status(200).json({ response: aiResponse });
 
   } catch (e) {
     console.error('Error en MiniMataburro:', e.message);
