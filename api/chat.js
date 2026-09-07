@@ -55,7 +55,7 @@ Objetivo: maximizar la utilidad con la menor cantidad posible de palabras, sin q
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: groqMessages,
         temperature: 0.3,
         max_tokens: 256
