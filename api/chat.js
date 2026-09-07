@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b', // ✅ NUEVO MODELO
+        model: 'qwen/qwen3.6-27b', // ✅ CAMBIADO A ESTE
         messages: groqMessages,
         temperature: 0.1,
         max_tokens: 50
@@ -55,7 +55,6 @@ export default async function handler(req, res) {
     const data = await response.json();
     let aiResponse = data.choices[0].message.content;
 
-    // Filtrar <think> y otros residuos
     aiResponse = aiResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
     aiResponse = aiResponse.replace(/<\/?think>/g, '');
     aiResponse = aiResponse.replace(/Here's a thinking process:[\s\S]*?\n/g, '');
